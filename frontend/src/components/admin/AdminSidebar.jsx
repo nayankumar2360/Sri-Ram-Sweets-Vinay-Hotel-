@@ -11,6 +11,7 @@ import {
   HiUsers, 
   HiChartPie, 
   HiSparkles,
+  HiCog6Tooth,
   HiXMark,
   HiArrowRightOnRectangle
 } from 'react-icons/hi2';
