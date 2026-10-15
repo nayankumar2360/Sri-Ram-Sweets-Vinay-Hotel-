@@ -34,6 +34,12 @@ const uploadProductImage = multer({
   fileFilter
 }).single('image');
 
+const uploadPaymentScreenshot = multer({
+  storage: createStorage('payments'),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter
+}).single('screenshot');
+
 const uploadFestivalBanner = multer({
   storage: createStorage('festivals'),
   limits: { fileSize: 8 * 1024 * 1024 }, // 8MB
