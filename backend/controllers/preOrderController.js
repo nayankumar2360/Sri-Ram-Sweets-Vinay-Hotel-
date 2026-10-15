@@ -14,6 +14,33 @@ exports.createPreOrder = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No items in pre-order' });
     }
 
+    const settings = await Settings.findOne() || new Settings();
+    const preOrderStartDays = settings.preOrderStartDays || 5;
+
+    // Check if festival pre-order window has opened
+    if (festival) {
+      const matchFest = settings.activeFestivals?.find(
+        f => f.name?.toLowerCase() === festival?.toLowerCase() || f._id?.toString() === festival?.toString()
+      );
+      if (matchFest && matchFest.startDate && !matchFest.active) {
+        const festStart = new Date(matchFest.startDate);
+        festStart.setHours(0, 0, 0, 0);
+        const windowOpen = new Date(festStart);
+        windowOpen.setDate(windowOpen.getDate() - preOrderStartDays);
+        windowOpen.setHours(0, 0, 0, 0);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (today < windowOpen) {
+          return res.status(400).json({
+            success: false,
+            message: `Pre-orders for ${matchFest.name} open ${preOrderStartDays} days before the festival on ${windowOpen.toLocaleDateString('en-IN')}.`
+          });
+        }
+      }
+    }
+
     const targetDate = new Date(scheduledDate);
     targetDate.setHours(0, 0, 0, 0);
 
@@ -172,8 +199,73 @@ exports.checkCapacity = async (req, res, next) => {
 exports.getFestivals = async (req, res, next) => {
   try {
     const settings = await Settings.findOne();
-    const activeFestivals = settings ? settings.activeFestivals.filter(f => f.active) : [];
-    res.status(200).json({ success: true, data: activeFestivals });
+    const preOrderStartDays = settings?.preOrderStartDays || 5;
+    const allFestivals = settings?.activeFestivals || [];
+    
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const festivalsWithStatus = allFestivals.map(f => {
+      let start = null;
+      let end = null;
+      let preOrderOpensOn = null;
+      let daysUntilFestival = null;
+      let daysUntilPreOrder = 0;
+      let isPreOrderOpen = false;
+      let isOngoing = false;
+
+      if (f.startDate) {
+        start = new Date(f.startDate);
+        start.setHours(0, 0, 0, 0);
+        end = f.endDate ? new Date(f.endDate) : new Date(start);
+        end.setHours(23, 59, 59, 999);
+
+        preOrderOpensOn = new Date(start);
+        preOrderOpensOn.setDate(preOrderOpensOn.getDate() - preOrderStartDays);
+        preOrderOpensOn.setHours(0, 0, 0, 0);
+
+        const diffStart = start.getTime() - now.getTime();
+        daysUntilFestival = Math.ceil(diffStart / (1000 * 60 * 60 * 24));
+
+        const diffPreOrder = preOrderOpensOn.getTime() - now.getTime();
+        daysUntilPreOrder = Math.ceil(diffPreOrder / (1000 * 60 * 60 * 24));
+
+        isOngoing = (now >= start && now <= end);
+        // Pre-order is open if manually active OR if today is on/after preOrderOpensOn and before/at end date
+        isPreOrderOpen = !!f.active || (now >= preOrderOpensOn && now <= end);
+      } else {
+        // If no date set, falls back to manual active toggle
+        isPreOrderOpen = !!f.active;
+      }
+
+      return {
+        _id: f._id,
+        name: f.name,
+        description: f.description,
+        startDate: f.startDate,
+        endDate: f.endDate,
+        active: f.active,
+        isPreOrderOpen,
+        isOngoing,
+        preOrderOpensOn,
+        daysUntilFestival,
+        daysUntilPreOrder: Math.max(0, daysUntilPreOrder),
+        preOrderStartDays
+      };
+    }).filter(f => {
+      // Show festivals that are currently open for pre-order, ongoing, or scheduled in the future
+      if (f.isPreOrderOpen) return true;
+      if (f.startDate && new Date(f.startDate) >= now) return true;
+      return false;
+    }).sort((a, b) => {
+      // Put currently open pre-orders first, then by earliest festival date
+      if (a.isPreOrderOpen && !b.isPreOrderOpen) return -1;
+      if (!a.isPreOrderOpen && b.isPreOrderOpen) return 1;
+      if (a.startDate && b.startDate) return new Date(a.startDate) - new Date(b.startDate);
+      return 0;
+    });
+    
+    res.status(200).json({ success: true, data: festivalsWithStatus });
   } catch (error) {
     next(error);
   }

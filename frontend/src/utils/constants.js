@@ -1,5 +1,5 @@
+// Status values (for programmatic use)
 export const ORDER_STATUSES = {
-  // Uppercase constant values
   PLACED: 'placed',
   PENDING: 'pending',
   ACCEPTED: 'accepted',
@@ -10,8 +10,10 @@ export const ORDER_STATUSES = {
   COMPLETED: 'completed',
   REJECTED: 'rejected',
   CANCELLED: 'cancelled',
+};
 
-  // Lowercase keys for readable labels
+// Human-readable labels for display
+export const ORDER_STATUS_LABELS = {
   placed: 'Placed',
   pending: 'Pending',
   accepted: 'Accepted',
@@ -23,7 +25,7 @@ export const ORDER_STATUSES = {
   out_for_delivery: 'Out for Delivery',
   completed: 'Completed',
   rejected: 'Rejected',
-  cancelled: 'Cancelled'
+  cancelled: 'Cancelled',
 };
 
 export const PAYMENT_STATUSES = {
@@ -31,11 +33,13 @@ export const PAYMENT_STATUSES = {
   SUBMITTED: 'submitted',
   VERIFIED: 'verified',
   FAILED: 'failed',
+};
 
+export const PAYMENT_STATUS_LABELS = {
   pending: 'Pending',
   submitted: 'Submitted',
   verified: 'Verified',
-  failed: 'Failed'
+  failed: 'Failed',
 };
 
 export const BULK_ORDER_STATUSES = {
@@ -50,7 +54,9 @@ export const BULK_ORDER_STATUSES = {
   READY: 'ready',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
+};
 
+export const BULK_ORDER_STATUS_LABELS = {
   requested: 'Requested',
   contacted: 'Contacted',
   quotation: 'Quotation / Discussion',
@@ -61,7 +67,7 @@ export const BULK_ORDER_STATUSES = {
   preparing: 'Preparing',
   ready: 'Ready',
   completed: 'Completed',
-  cancelled: 'Cancelled'
+  cancelled: 'Cancelled',
 };
 
 export const EVENT_TYPES = [

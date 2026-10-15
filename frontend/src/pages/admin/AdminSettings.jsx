@@ -266,60 +266,86 @@ const AdminSettings = () => {
 
       {/* Festival Pre-Order Campaigns */}
       <div className="bg-white rounded-xl shadow-sm border border-[#E8DDD4] p-6 space-y-6">
-        <div className="flex items-center justify-between border-b border-[#E8DDD4] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E8DDD4] pb-3 gap-2">
           <div className="flex items-center space-x-2 text-[#9B2335]">
             <HiCalendarDays className="w-5 h-5" />
-            <h2 className="font-bold text-lg text-[#2C1810]">Active Festival Campaigns</h2>
+            <h2 className="font-bold text-lg text-[#2C1810]">Festival Pre-Order Campaigns</h2>
           </div>
-          <span className="text-xs text-[#6B4F3A]">Customers can pre-order sweets for active festivals</span>
+          <div className="flex items-center space-x-2 text-xs text-[#6B4F3A]">
+            <span>Auto-open pre-orders:</span>
+            <input
+              type="number"
+              min="1"
+              max="30"
+              value={settings.preOrderStartDays ?? 5}
+              onChange={(e) => handleChange('preOrderStartDays', Number(e.target.value))}
+              className="w-16 px-2 py-1 border border-[#E8DDD4] rounded text-sm text-center font-bold text-[#9B2335]"
+            />
+            <span>days before festival</span>
+          </div>
         </div>
 
         {/* Existing Festivals List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(settings.activeFestivals || []).map((fest, idx) => (
-            <div 
-              key={idx} 
-              className={`p-4 rounded-xl border transition ${
-                fest.active ? 'bg-[#FFF9F0] border-[#D4A017]' : 'bg-gray-50 border-gray-200 opacity-60'
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <h3 className="font-bold text-[#2C1810] text-sm">{fest.name}</h3>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={fest.active}
-                    onChange={() => handleToggleFestival(idx)}
-                    className="accent-[#9B2335] w-4 h-4 cursor-pointer"
-                    title="Toggle active"
-                  />
-                  <button
-                    onClick={() => handleDeleteFestival(idx)}
-                    className="text-red-500 hover:text-red-700 p-1"
-                    title="Delete"
-                  >
-                    <HiTrash className="w-4 h-4" />
-                  </button>
+          {(settings.activeFestivals || []).map((fest, idx) => {
+            const start = fest.startDate ? new Date(fest.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+            const end = fest.endDate ? new Date(fest.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+
+            return (
+              <div 
+                key={idx} 
+                className={`p-4 rounded-xl border transition ${
+                  fest.active ? 'bg-[#FFF9F0] border-[#D4A017]' : 'bg-gray-50 border-gray-200'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-[#2C1810] text-sm">{fest.name}</h3>
+                    {start && (
+                      <p className="text-[11px] text-[#8C6D58] mt-0.5">
+                        📅 {start}{end && end !== start ? ` - ${end}` : ''}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={fest.active}
+                      onChange={() => handleToggleFestival(idx)}
+                      className="accent-[#9B2335] w-4 h-4 cursor-pointer"
+                      title="Force Active / Enable Pre-orders"
+                    />
+                    <button
+                      onClick={() => handleDeleteFestival(idx)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                      title="Delete"
+                    >
+                      <HiTrash className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-[#6B4F3A] mt-2">{fest.description || 'Festive celebration'}</p>
+                <div className="mt-3 flex items-center justify-between text-[11px] font-medium">
+                  <span className={fest.active ? 'text-green-700 font-semibold' : 'text-amber-700'}>
+                    {fest.active ? '● Pre-orders Active' : '○ Auto-opens 5 days prior'}
+                  </span>
                 </div>
               </div>
-              <p className="text-xs text-[#6B4F3A] mt-1">{fest.description || 'Festive celebration'}</p>
-              <div className="mt-3 text-[11px] font-medium text-[#9B2335]">
-                {fest.active ? '● Pre-orders Open' : '○ Inactive'}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Add Festival Form */}
         <div className="bg-[#FAF5EE] rounded-xl p-4 border border-[#E8DDD4] space-y-3">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#9B2335]">Add New Festival Campaign</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <input
               type="text"
-              placeholder="Festival Name (e.g. Raksha Bandhan)"
+              placeholder="Festival Name (e.g. Diwali)"
               value={newFestival.name}
               onChange={(e) => setNewFestival(prev => ({ ...prev, name: e.target.value }))}
               className="px-3 py-2 border border-[#E8DDD4] rounded-lg text-sm bg-white"
+              required
             />
             <input
               type="text"
@@ -328,10 +354,30 @@ const AdminSettings = () => {
               onChange={(e) => setNewFestival(prev => ({ ...prev, description: e.target.value }))}
               className="px-3 py-2 border border-[#E8DDD4] rounded-lg text-sm bg-white"
             />
+            <div>
+              <label className="block text-[10px] text-[#6B4F3A] mb-0.5">Start Date</label>
+              <input
+                type="date"
+                value={newFestival.startDate}
+                onChange={(e) => setNewFestival(prev => ({ ...prev, startDate: e.target.value }))}
+                className="w-full px-3 py-1.5 border border-[#E8DDD4] rounded-lg text-sm bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-[#6B4F3A] mb-0.5">End Date</label>
+              <input
+                type="date"
+                value={newFestival.endDate}
+                onChange={(e) => setNewFestival(prev => ({ ...prev, endDate: e.target.value }))}
+                className="w-full px-3 py-1.5 border border-[#E8DDD4] rounded-lg text-sm bg-white"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end pt-1">
             <button
               type="button"
               onClick={handleAddFestival}
-              className="inline-flex items-center justify-center bg-[#9B2335] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#7A1B29] transition"
+              className="inline-flex items-center justify-center bg-[#9B2335] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#7A1B29] transition shadow-sm"
             >
               <HiPlus className="mr-1 w-4 h-4" /> Add Festival
             </button>

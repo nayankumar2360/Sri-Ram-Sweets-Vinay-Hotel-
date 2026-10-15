@@ -90,25 +90,25 @@ const AdminAnalytics = () => {
           title="Total Orders" 
           value={summary?.totalOrders ?? 0} 
           icon={HiShoppingBag} 
-          color="#3B82F6"
+          color="border-blue-500"
         />
         <StatsCard 
           title="Completed Orders" 
           value={summary?.completedOrders ?? 0} 
           icon={HiCheckCircle} 
-          color="#15803D"
+          color="border-green-500"
         />
         <StatsCard 
           title="Direct Sales Revenue" 
           value={formatPrice(summary?.totalRevenue ?? 0)} 
           icon={HiCurrencyRupee} 
-          color="#D4A017"
+          color="border-yellow-500"
         />
         <StatsCard 
           title="Avg. Order Value" 
           value={formatPrice(Math.round(summary?.averageOrderValue ?? 0))} 
           icon={HiSparkles} 
-          color="#E8742A"
+          color="border-orange-500"
         />
       </div>
 

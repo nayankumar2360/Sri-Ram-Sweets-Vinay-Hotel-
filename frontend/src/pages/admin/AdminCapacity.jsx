@@ -3,12 +3,14 @@ import * as adminApi from '../../api/admin';
 import CapacityForm from '../../components/admin/CapacityForm';
 import Loading from '../../components/common/Loading';
 import toast from 'react-hot-toast';
+import { HiPencilSquare, HiTrash } from 'react-icons/hi2';
 
 const AdminCapacity = () => {
   const [capacities, setCapacities] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCapacity, setEditingCapacity] = useState(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -34,12 +36,35 @@ const AdminCapacity = () => {
 
   const handleSaveCapacity = async (data) => {
     try {
-      await adminApi.setCapacity(data);
-      toast.success('Capacity saved successfully');
+      if (editingCapacity) {
+        await adminApi.updateCapacity(editingCapacity._id, data);
+        toast.success('Capacity updated successfully');
+      } else {
+        await adminApi.setCapacity(data);
+        toast.success('Capacity saved successfully');
+      }
       setIsModalOpen(false);
+      setEditingCapacity(null);
       fetchData();
     } catch (error) {
       toast.error(error.message || 'Failed to save capacity');
+    }
+  };
+
+  const handleEdit = (cap) => {
+    setEditingCapacity(cap);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this capacity constraint?')) {
+      try {
+        await adminApi.deleteCapacity(id);
+        toast.success('Capacity deleted successfully');
+        fetchData();
+      } catch (error) {
+        toast.error(error.message || 'Failed to delete capacity');
+      }
     }
   };
 
@@ -48,7 +73,10 @@ const AdminCapacity = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-[#2C1810]">Capacity Management</h1>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingCapacity(null);
+            setIsModalOpen(true);
+          }}
           className="bg-[#9B2335] text-white px-4 py-2 rounded-lg hover:bg-[#7A1B29]"
         >
           Set Capacity
@@ -65,6 +93,7 @@ const AdminCapacity = () => {
                 <th className="p-4 font-semibold">Max Capacity</th>
                 <th className="p-4 font-semibold">Ordered</th>
                 <th className="p-4 font-semibold">Remaining</th>
+                <th className="p-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E8DDD4]">
@@ -83,11 +112,29 @@ const AdminCapacity = () => {
                         <span className="font-medium text-[#15803D]">{remaining}</span>
                       )}
                     </td>
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => handleEdit(cap)}
+                          className="p-1 text-[#6B4F3A] hover:text-[#9B2335] hover:bg-gray-100 rounded transition-colors"
+                          title="Edit"
+                        >
+                          <HiPencilSquare className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(cap._id)}
+                          className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                          title="Delete"
+                        >
+                          <HiTrash className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
               {capacities.length === 0 && (
-                <tr><td colSpan="5" className="p-8 text-center text-[#6B4F3A]">No capacity constraints set</td></tr>
+                <tr><td colSpan="6" className="p-8 text-center text-[#6B4F3A]">No capacity constraints set</td></tr>
               )}
             </tbody>
           </table>
@@ -96,9 +143,13 @@ const AdminCapacity = () => {
 
       {isModalOpen && (
         <CapacityForm 
+          capacity={editingCapacity}
           products={products}
           onSubmit={handleSaveCapacity}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingCapacity(null);
+          }}
         />
       )}
     </div>

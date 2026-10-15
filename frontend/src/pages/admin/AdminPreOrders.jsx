@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
 import OrderTable from '../../components/admin/OrderTable';
-import { ORDER_STATUSES } from '../../utils/constants';
+import { ORDER_STATUSES, ORDER_STATUS_LABELS } from '../../utils/constants';
 import toast from 'react-hot-toast';
 
 const AdminPreOrders = () => {
@@ -39,7 +39,7 @@ const AdminPreOrders = () => {
       } else if (action === 'reject') {
         const reason = window.prompt('Enter reason for rejection:');
         if (reason !== null) {
-          await adminApi.updateOrderStatus(orderId, ORDER_STATUSES.REJECTED);
+          await adminApi.rejectOrder(orderId, reason);
           toast.success('Pre-order rejected');
         }
       } else if (action === 'update_status' && statusValue) {
@@ -79,8 +79,8 @@ const AdminPreOrders = () => {
             className="w-full px-3 py-2 border border-[#E8DDD4] rounded-lg focus:ring-2 focus:ring-[#9B2335] focus:border-transparent text-sm"
           >
             <option value="">All Statuses</option>
-            {Object.entries(ORDER_STATUSES).map(([key, value]) => (
-              <option key={key} value={value}>{key.replace('_', ' ')}</option>
+            {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
             ))}
           </select>
         </div>

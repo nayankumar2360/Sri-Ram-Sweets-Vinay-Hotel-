@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatPrice, formatDateTime, getStatusColor, formatOrderStatus, formatPaymentStatus } from '../../utils/formatters';
-import { ORDER_STATUSES } from '../../utils/constants';
+import { ORDER_STATUSES, ORDER_STATUS_LABELS } from '../../utils/constants';
 import Loading from '../common/Loading';
 import { Link } from 'react-router-dom';
 
@@ -97,8 +97,8 @@ const OrderTable = ({ orders, type = 'order', onAction, loading }) => {
                       value={order.status}
                       onChange={(e) => onAction('update_status', order._id, e.target.value)}
                     >
-                      {Object.entries(ORDER_STATUSES).map(([key, value]) => (
-                        <option key={key} value={value}>{formatOrderStatus(value)}</option>
+                      {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
                       ))}
                     </select>
                   </div>

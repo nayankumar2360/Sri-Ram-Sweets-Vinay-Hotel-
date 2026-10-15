@@ -10,7 +10,7 @@ const AdminRoute = () => {
     return <Loading />;
   }
 
-  return isAuthenticated && isOwner ? <Outlet /> : <Navigate to="/" replace />;
+  return isAuthenticated && isOwner ? <Outlet /> : <Navigate to="/admin/login" replace />;
 };
 
 export default AdminRoute;

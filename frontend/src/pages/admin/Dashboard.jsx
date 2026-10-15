@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import * as adminApi from '../../api/admin';
 import StatsCard from '../../components/admin/StatsCard';
 import Loading from '../../components/common/Loading';
@@ -17,6 +17,7 @@ import {
 } from 'react-icons/hi2';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -93,7 +94,7 @@ const Dashboard = () => {
             </thead>
             <tbody className="divide-y divide-[#E8DDD4]">
               {recentOrders.map((order) => (
-                <tr key={order._id} className="hover:bg-gray-50 transition-colors text-sm cursor-pointer" onClick={() => window.location.href = `/admin/orders/${order._id}`}>
+                <tr key={order._id} className="hover:bg-gray-50 transition-colors text-sm cursor-pointer" onClick={() => navigate(`/admin/orders/${order._id}`)}>
                   <td className="p-4 font-medium text-[#9B2335]">#{order.orderNumber}</td>
                   <td className="p-4">
                     <p className="font-medium text-[#2C1810]">{order.customer?.name}</p>

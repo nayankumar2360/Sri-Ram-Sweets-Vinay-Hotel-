@@ -20,6 +20,7 @@ const settingsSchema = new mongoose.Schema({
   isDeliveryAvailable: { type: Boolean, default: true },
   openingTime: { type: String, default: '08:00' },
   closingTime: { type: String, default: '21:00' },
+  preOrderStartDays: { type: Number, default: 5 },
   activeFestivals: [festivalSchema]
 }, { timestamps: true });
 

@@ -124,7 +124,12 @@ const AdminOrderDetail = () => {
                   <button onClick={() => handleUpdateStatus(ORDER_STATUSES.ACCEPTED)} className="px-4 py-2 bg-[#15803D] text-white rounded-lg hover:bg-green-700">Accept Order</button>
                   <button onClick={() => {
                     const reason = prompt('Reason for rejection:');
-                    if (reason !== null) handleUpdateStatus(ORDER_STATUSES.REJECTED);
+                    if (reason !== null) {
+                      adminApi.rejectOrder(id, reason).then(() => {
+                        toast.success('Order rejected');
+                        fetchOrder();
+                      }).catch(err => toast.error(err.message || 'Failed to reject order'));
+                    }
                   }} className="px-4 py-2 bg-[#DC2626] text-white rounded-lg hover:bg-red-700">Reject Order</button>
                 </>
               )}
