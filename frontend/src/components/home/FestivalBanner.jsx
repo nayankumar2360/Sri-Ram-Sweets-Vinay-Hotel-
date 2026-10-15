@@ -14,7 +14,7 @@ const FestivalBanner = ({ festivals }) => {
           <p className="text-white opacity-90">Pre-order now to guarantee availability for the festival!</p>
         </div>
         <Link
-          to="/pre-order"
+          to={`/pre-order?festival=${encodeURIComponent(currentFestival.slug || currentFestival.name || '')}`}
           className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-accent bg-white hover:bg-cream shadow-md transition-colors whitespace-nowrap"
         >
           Pre-Order Now

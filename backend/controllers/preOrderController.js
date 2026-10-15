@@ -1,6 +1,7 @@
 const PreOrder = require('../models/PreOrder');
 const Product = require('../models/Product');
 const Settings = require('../models/Settings');
+const Festival = require('../models/Festival');
 const Capacity = require('../models/Capacity');
 const Payment = require('../models/Payment');
 const User = require('../models/User');
@@ -14,29 +15,69 @@ exports.createPreOrder = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No items in pre-order' });
     }
 
-    const settings = await Settings.findOne() || new Settings();
-    const preOrderStartDays = settings.preOrderStartDays || 5;
+    let festivalDoc = null;
+    let festivalName = festival || 'Festival Special';
 
-    // Check if festival pre-order window has opened
+    // 1. Check against new Festival model first
     if (festival) {
-      const matchFest = settings.activeFestivals?.find(
-        f => f.name?.toLowerCase() === festival?.toLowerCase() || f._id?.toString() === festival?.toString()
-      );
-      if (matchFest && matchFest.startDate && !matchFest.active) {
-        const festStart = new Date(matchFest.startDate);
-        festStart.setHours(0, 0, 0, 0);
-        const windowOpen = new Date(festStart);
-        windowOpen.setDate(windowOpen.getDate() - preOrderStartDays);
-        windowOpen.setHours(0, 0, 0, 0);
+      if (festival.match(/^[0-9a-fA-F]{24}$/)) {
+        festivalDoc = await Festival.findById(festival);
+      }
+      if (!festivalDoc) {
+        festivalDoc = await Festival.findOne({ slug: festival.toLowerCase().trim() });
+      }
+      if (!festivalDoc) {
+        festivalDoc = await Festival.findOne({ name: { $regex: new RegExp(`^${festival}$`, 'i') } });
+      }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+      if (festivalDoc) {
+        festivalName = festivalDoc.name;
+        const now = new Date();
+        const calculated = festivalDoc.calculateStatus(now);
 
-        if (today < windowOpen) {
+        if (!calculated.isOrderingAllowed) {
+          let errorMsg = `Pre-orders for ${festivalDoc.name} are currently closed.`;
+          if (calculated.preorderStatus === 'not_yet_open') {
+            errorMsg = `Pre-orders for ${festivalDoc.name} are not open yet. They open on ${calculated.openTime.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}.`;
+          } else if (calculated.preorderStatus === 'temporarily_closed') {
+            errorMsg = `Pre-orders for ${festivalDoc.name} are temporarily paused by owner. ${calculated.statusReason || ''}`.trim();
+          } else if (calculated.preorderStatus === 'sold_out') {
+            errorMsg = `Pre-orders for ${festivalDoc.name} have reached full capacity / sold out.`;
+          } else if (calculated.preorderStatus === 'deadline_passed') {
+            errorMsg = `The pre-order deadline for ${festivalDoc.name} has passed.`;
+          } else if (calculated.preorderStatus === 'festival_completed') {
+            errorMsg = `${festivalDoc.name} has concluded.`;
+          }
           return res.status(400).json({
             success: false,
-            message: `Pre-orders for ${matchFest.name} open ${preOrderStartDays} days before the festival on ${windowOpen.toLocaleDateString('en-IN')}.`
+            message: errorMsg,
+            preorderStatus: calculated.preorderStatus,
+            statusReason: calculated.statusReason
           });
+        }
+      } else {
+        // Fallback to legacy Settings.activeFestivals check
+        const settings = await Settings.findOne() || new Settings();
+        const preOrderStartDays = settings.preOrderStartDays || 5;
+        const matchFest = settings.activeFestivals?.find(
+          f => f.name?.toLowerCase() === festival?.toLowerCase() || f._id?.toString() === festival?.toString()
+        );
+        if (matchFest && matchFest.startDate && !matchFest.active) {
+          const festStart = new Date(matchFest.startDate);
+          festStart.setHours(0, 0, 0, 0);
+          const windowOpen = new Date(festStart);
+          windowOpen.setDate(windowOpen.getDate() - preOrderStartDays);
+          windowOpen.setHours(0, 0, 0, 0);
+
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          if (today < windowOpen) {
+            return res.status(400).json({
+              success: false,
+              message: `Pre-orders for ${matchFest.name} open ${preOrderStartDays} days before the festival on ${windowOpen.toLocaleDateString('en-IN')}.`
+            });
+          }
         }
       }
     }
@@ -103,7 +144,8 @@ exports.createPreOrder = async (req, res, next) => {
       preOrderNumber: generateOrderNumber('PRE'),
       customer: req.user._id,
       items: orderItems,
-      festival,
+      festival: festivalName,
+      festivalRef: festivalDoc ? festivalDoc._id : null,
       scheduledDate: targetDate,
       scheduledTime,
       totalAmount: subtotal,
@@ -114,12 +156,18 @@ exports.createPreOrder = async (req, res, next) => {
       notes
     });
 
+    if (festivalDoc) {
+      await Festival.findByIdAndUpdate(festivalDoc._id, {
+        $inc: { 'preorderSettings.currentTotalOrders': 1 }
+      });
+    }
+
     const owners = await User.find({ role: 'owner' });
     for (const owner of owners) {
       await createNotification(
         owner._id,
         'New Pre-Order Received',
-        `Pre-Order ${preOrder.preOrderNumber} placed for ${festival}.`,
+        `Pre-Order ${preOrder.preOrderNumber} placed for ${festivalName}.`,
         'preorder',
         preOrder._id,
         'preorder'
@@ -198,11 +246,65 @@ exports.checkCapacity = async (req, res, next) => {
 
 exports.getFestivals = async (req, res, next) => {
   try {
+    const now = new Date();
+
+    // 1. Query new Festival collection first
+    const festivalsFromDb = await Festival.find({ isActive: true })
+      .populate('products')
+      .sort({ startDate: 1 });
+
+    if (festivalsFromDb && festivalsFromDb.length > 0) {
+      const festivalsWithStatus = festivalsFromDb.map(f => {
+        const calculated = f.calculateStatus(now);
+        return {
+          _id: f._id,
+          name: f.name,
+          slug: f.slug,
+          description: f.description,
+          region: f.region,
+          year: f.year,
+          startDate: f.startDate,
+          endDate: f.endDate,
+          importantDays: f.importantDays || [],
+          banner: f.banner,
+          preorderSettings: f.preorderSettings,
+          manualOverride: f.manualOverride,
+          products: f.products,
+          isFeatured: f.isFeatured,
+          isActive: f.isActive,
+          active: calculated.isOrderingAllowed, // backwards compatibility
+          isPreOrderOpen: calculated.isOrderingAllowed,
+          isOngoing: calculated.festivalStatus === 'ongoing',
+          festivalStatus: calculated.festivalStatus,
+          preorderStatus: calculated.preorderStatus,
+          statusReason: calculated.statusReason,
+          preOrderOpensOn: calculated.openTime,
+          closeDeadline: calculated.closeDeadline,
+          daysUntilFestival: calculated.daysUntilFestival,
+          daysUntilPreOrder: calculated.daysUntilPreOrder,
+          preOrderStartDays: f.preorderSettings?.leadTimeDays || 5
+        };
+      }).filter(f => {
+        // Show festivals that are currently open for pre-order, ongoing, or upcoming
+        if (f.isPreOrderOpen) return true;
+        if (f.festivalStatus !== 'completed') return true;
+        return false;
+      }).sort((a, b) => {
+        // Put currently open pre-orders first, then by earliest festival date
+        if (a.isPreOrderOpen && !b.isPreOrderOpen) return -1;
+        if (!a.isPreOrderOpen && b.isPreOrderOpen) return 1;
+        if (a.startDate && b.startDate) return new Date(a.startDate) - new Date(b.startDate);
+        return 0;
+      });
+
+      return res.status(200).json({ success: true, data: festivalsWithStatus });
+    }
+
+    // 2. Fallback to legacy Settings.activeFestivals if Festival collection is not yet seeded
     const settings = await Settings.findOne();
     const preOrderStartDays = settings?.preOrderStartDays || 5;
     const allFestivals = settings?.activeFestivals || [];
     
-    const now = new Date();
     now.setHours(0, 0, 0, 0);
     
     const festivalsWithStatus = allFestivals.map(f => {
@@ -231,10 +333,8 @@ exports.getFestivals = async (req, res, next) => {
         daysUntilPreOrder = Math.ceil(diffPreOrder / (1000 * 60 * 60 * 24));
 
         isOngoing = (now >= start && now <= end);
-        // Pre-order is open if manually active OR if today is on/after preOrderOpensOn and before/at end date
         isPreOrderOpen = !!f.active || (now >= preOrderOpensOn && now <= end);
       } else {
-        // If no date set, falls back to manual active toggle
         isPreOrderOpen = !!f.active;
       }
 
@@ -253,12 +353,10 @@ exports.getFestivals = async (req, res, next) => {
         preOrderStartDays
       };
     }).filter(f => {
-      // Show festivals that are currently open for pre-order, ongoing, or scheduled in the future
       if (f.isPreOrderOpen) return true;
       if (f.startDate && new Date(f.startDate) >= now) return true;
       return false;
     }).sort((a, b) => {
-      // Put currently open pre-orders first, then by earliest festival date
       if (a.isPreOrderOpen && !b.isPreOrderOpen) return -1;
       if (!a.isPreOrderOpen && b.isPreOrderOpen) return 1;
       if (a.startDate && b.startDate) return new Date(a.startDate) - new Date(b.startDate);

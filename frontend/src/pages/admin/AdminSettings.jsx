@@ -285,6 +285,22 @@ const AdminSettings = () => {
           </div>
         </div>
 
+        {/* Upgrade Callout */}
+        <div className="bg-[#FFF9F0] border border-[#D4A017] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div>
+            <h4 className="font-bold text-sm text-[#9B2335]">✨ Dedicated Bihar-First Festival Calendar & Banners</h4>
+            <p className="text-xs text-[#6B4F3A] mt-0.5">
+              Access verified 2026-2027 Bihar festival dates, Chhath/Diwali/Holi ritual schedules, hero banners, and manual preorder overrides.
+            </p>
+          </div>
+          <Link
+            to="/admin/festivals"
+            className="px-4 py-2 bg-[#9B2335] hover:bg-[#7A1B29] text-white text-xs font-bold rounded-lg whitespace-nowrap shadow-sm transition"
+          >
+            Open Festival Manager →
+          </Link>
+        </div>
+
         {/* Existing Festivals List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {(settings.activeFestivals || []).map((fest, idx) => {

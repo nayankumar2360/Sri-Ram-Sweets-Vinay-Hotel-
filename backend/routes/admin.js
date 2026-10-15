@@ -71,4 +71,16 @@ router.put('/settings', adminController.updateSettings);
 router.get('/notifications', adminController.getAdminNotifications);
 router.put('/notifications/:id/read', adminController.markAdminNotificationRead);
 
+// Festivals Management
+const festivalController = require('../controllers/festivalController');
+const { uploadFestivalBanner } = require('../middleware/upload');
+router.get('/festivals', festivalController.getFestivals);
+router.post('/festivals', uploadFestivalBanner, festivalController.createFestival);
+router.put('/festivals/:id', uploadFestivalBanner, festivalController.updateFestival);
+router.patch('/festivals/:id/banner', uploadFestivalBanner, festivalController.updateBanner);
+router.patch('/festivals/:id/preorders', festivalController.updatePreorderControl);
+router.patch('/festivals/:id/capacity', festivalController.updateCapacity);
+router.delete('/festivals/:id', festivalController.deleteFestival);
+router.post('/festivals/seed', festivalController.seedFestivals);
+
 module.exports = router;

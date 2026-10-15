@@ -88,3 +88,19 @@ export const updateSettings = (data) => api.put('/admin/settings', data);
 // Notifications
 export const getAdminNotifications = () => api.get('/admin/notifications');
 export const markAdminNotificationRead = (id) => api.put(`/admin/notifications/${id}/read`);
+
+// Festivals
+export const getAdminFestivals = (params) => api.get('/admin/festivals', { params });
+export const createAdminFestival = (data) => api.post('/admin/festivals', data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const updateAdminFestival = (id, data) => api.put(`/admin/festivals/${id}`, data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const updateAdminFestivalBanner = (id, data) => api.patch(`/admin/festivals/${id}/banner`, data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const updateAdminFestivalPreorders = (id, data) => api.patch(`/admin/festivals/${id}/preorders`, data);
+export const updateAdminFestivalCapacity = (id, data) => api.patch(`/admin/festivals/${id}/capacity`, data);
+export const deleteAdminFestival = (id) => api.delete(`/admin/festivals/${id}`);
+export const seedAdminFestivals = () => api.post('/admin/festivals/seed');

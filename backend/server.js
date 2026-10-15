@@ -44,7 +44,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Ensure upload directories exist
-const uploadDirs = ['./uploads/products', './uploads/payments'];
+const uploadDirs = ['./uploads/products', './uploads/payments', './uploads/festivals'];
 uploadDirs.forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -69,6 +69,7 @@ app.use('/api/preorders', require('./routes/preOrders'));
 app.use('/api/pre-orders', require('./routes/preOrders'));
 app.use('/api/bulk-orders', require('./routes/bulkOrders'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/festivals', require('./routes/festivals'));
 app.use('/api/admin', require('./routes/admin'));
 
 // Error Handler

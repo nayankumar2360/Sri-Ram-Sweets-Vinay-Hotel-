@@ -10,7 +10,7 @@ import {
   HiChartBar, 
   HiUsers, 
   HiChartPie, 
-  HiCog6Tooth,
+  HiSparkles,
   HiXMark,
   HiArrowRightOnRectangle
 } from 'react-icons/hi2';
@@ -19,6 +19,7 @@ const navItems = [
   { name: 'Dashboard', path: '/admin', icon: HiHome, exact: true },
   { name: 'Orders', path: '/admin/orders', icon: HiClipboardDocumentList },
   { name: 'Menu', path: '/admin/menu', icon: HiRectangleStack },
+  { name: 'Festivals', path: '/admin/festivals', icon: HiSparkles },
   { name: 'Pre-Orders', path: '/admin/preorders', icon: HiCalendarDays },
   { name: 'Bulk Orders', path: '/admin/bulk-orders', icon: HiCube },
   { name: 'Capacity', path: '/admin/capacity', icon: HiChartBar },

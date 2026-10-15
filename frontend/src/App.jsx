@@ -38,6 +38,7 @@ import AdminCustomers from './pages/admin/AdminCustomers';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminCapacity from './pages/admin/AdminCapacity';
+import AdminFestivals from './pages/admin/AdminFestivals';
 
 function MainLayout() {
   const location = useLocation();
@@ -82,6 +83,7 @@ function MainLayout() {
               <Route path="bulk-orders" element={<AdminBulkOrders />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="festivals" element={<AdminFestivals />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="capacity" element={<AdminCapacity />} />
             </Route>

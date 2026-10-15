@@ -21,6 +21,7 @@ const preOrderSchema = new mongoose.Schema({
   preOrderNumber: { type: String, unique: true },
   items: [orderItemSchema],
   festival: { type: String, required: true },
+  festivalRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Festival' },
   scheduledDate: { type: Date, required: true },
   scheduledTime: { type: String },
   fulfillmentType: { type: String, enum: ['pickup', 'delivery'], required: true },
